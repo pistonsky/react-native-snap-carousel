@@ -1171,7 +1171,8 @@ export class Carousel<TData> extends React.Component<
                   carouselRef: this._carouselRef,
                   vertical: !!this.props.vertical,
                   sliderWidth: this.props.sliderWidth,
-                  itemWidth: this.props.itemWidth
+                  itemWidth: this.props.itemWidth,
+                  animatedValue
               })}
           </Component>
       );
