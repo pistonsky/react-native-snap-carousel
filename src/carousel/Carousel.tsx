@@ -692,7 +692,7 @@ export class Carousel<TData> extends React.Component<
   _getActiveSlideOffset () {
       const { activeSlideOffset } = this.props;
       const itemMainDimension = this._getItemMainDimension();
-      const minOffset = 10;
+      const minOffset = 0;
       // Make sure activeSlideOffset never prevents the active area from being at least 10 px wide
       return itemMainDimension / 2 - activeSlideOffset >= minOffset ?
           activeSlideOffset :
