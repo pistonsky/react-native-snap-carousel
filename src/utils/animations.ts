@@ -43,6 +43,16 @@ export function defaultScrollInterpolator<TData> (
 
     return { inputRange, outputRange };
 }
+export function cumulativeScrollInterpolator<TData> (
+    index: number,
+    carouselProps: CarouselProps<TData>
+) {
+    const range = [1, 0, -1];
+    const inputRange = getInputRangeFromIndexes(range, index, carouselProps);
+    const outputRange = [-1, 0, 1];
+
+    return { inputRange, outputRange };
+}
 export function defaultAnimatedStyles<TData> (
     _index: number,
     animatedValue: Animated.AnimatedInterpolation,

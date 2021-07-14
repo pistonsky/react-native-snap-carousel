@@ -16,6 +16,7 @@ import {
 import shallowCompare from 'react-addons-shallow-compare';
 import {
     defaultScrollInterpolator,
+    cumulativeScrollInterpolator,
     stackScrollInterpolator,
     tinderScrollInterpolator,
     defaultAnimatedStyles,
@@ -102,7 +103,8 @@ export class Carousel<TData> extends React.Component<
 
       this.state = {
           hideCarousel: !!props.apparitionDelay,
-          interpolators: []
+          interpolators: [],
+          cumulativeInterpolators: []
       };
 
       // this._RNVersionCode = this._getRNVersionCode();
@@ -758,7 +760,7 @@ export class Carousel<TData> extends React.Component<
   }
 
   _initPositionsAndInterpolators (props: CarouselProps<TData> = this.props) {
-      const { data, scrollInterpolator } = props;
+      const { data, scrollInterpolator, onInterpolatorsUpdated } = props;
       const itemMainDimension = this._getItemMainDimension();
 
       if (!data || !data.length) {
@@ -766,11 +768,13 @@ export class Carousel<TData> extends React.Component<
       }
 
       const interpolators: Animated.AnimatedInterpolation[] = [];
+      const cumulativeInterpolators: Animated.AnimatedInterpolation[] = [];
       this._positions = [];
 
       this._getCustomData(props).forEach((_itemData, index) => {
           const _index = this._getCustomIndex(index, props);
           let animatedValue: Animated.AnimatedInterpolation;
+          let cumulativeAnimatedValue: Animated.AnimatedInterpolation;
 
           this._positions[index] = {
               start: index * itemMainDimension,
@@ -779,8 +783,10 @@ export class Carousel<TData> extends React.Component<
 
           if (!this._shouldAnimateSlides(props) || !this._scrollPos) {
               animatedValue = new Animated.Value(1);
+              cumulativeAnimatedValue = new Animated.Value(0);
           } else {
               let interpolator;
+              const cumulativeInterpolator = cumulativeScrollInterpolator(_index, props);
 
               if (scrollInterpolator) {
                   interpolator = scrollInterpolator(_index, props);
@@ -802,12 +808,18 @@ export class Carousel<TData> extends React.Component<
                   ...interpolator,
                   extrapolate: 'clamp'
               });
+              cumulativeAnimatedValue = this._scrollPos.interpolate({
+                  ...cumulativeInterpolator,
+                  extrapolate: 'clamp'
+              });
           }
 
           interpolators.push(animatedValue);
+          cumulativeInterpolators.push(cumulativeAnimatedValue);
       });
 
-      this.setState({ interpolators });
+      this.setState({ interpolators, cumulativeInterpolators });
+      onInterpolatorsUpdated && onInterpolatorsUpdated(interpolators, cumulativeInterpolators);
   }
 
   _hackActiveSlideAnimation (index: number, scrollValue = 1) {
@@ -1125,12 +1137,13 @@ export class Carousel<TData> extends React.Component<
   }
 
   _renderItem ({ item, index }: { item: TData; index: number }) {
-      const { interpolators } = this.state;
+      const { interpolators, cumulativeInterpolators } = this.state;
       const {
           keyExtractor,
           slideStyle
       } = this.props;
       const animatedValue = interpolators && interpolators[index];
+      const cumulativeAnimatedValue = cumulativeInterpolators && cumulativeInterpolators[index];
 
       if (typeof animatedValue === 'undefined') {
           return null;
@@ -1172,7 +1185,8 @@ export class Carousel<TData> extends React.Component<
                   vertical: !!this.props.vertical,
                   sliderWidth: this.props.sliderWidth,
                   itemWidth: this.props.itemWidth,
-                  animatedValue
+                  animatedValue,
+                  cumulativeAnimatedValue
               })}
           </Component>
       );
